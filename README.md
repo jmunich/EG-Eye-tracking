@@ -1,1 +1,2 @@
-# EG-Eye-tracking
+# Eye-movement in strategic choice
+My thesis project
