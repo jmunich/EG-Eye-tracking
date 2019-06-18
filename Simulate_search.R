@@ -1,5 +1,5 @@
-## Finds index of the highest value.  If two or more highest values are equal, 
-# selects one at random. The function also returns the number of maxima.
+## Find index of the highest/lowest value.  If two or more highest/lowest values are equal, 
+# selects one at random. The function also returns the number of maxima/minima.
 
 my_max<-function(x){
   maxima<-which(x == max(x))
@@ -10,6 +10,18 @@ my_max<-function(x){
     maximum<-maxima
   }
   output<-list(maximum,npos)
+  return(output)
+}
+
+my_min<-function(x){
+  minima<-which(x == min(x))
+  npos<-length(minima)>1
+  if(npos){
+    minimum<-sample(minima,1)
+  }else{
+    minimum<-minima
+  }
+  output<-list(minimum,npos)
   return(output)
 }
 
@@ -75,14 +87,62 @@ transpose_eye<-function(eye_data,game){
   return(output)
 }
 
+## Utility for eye-search in finding the maximum in pre-selected subset of cells
+
+search_maximum<-function(meta_memory,loc_meta_memory){
+  memory<-meta_memory
+  loc_memory<-loc_meta_memory
+  ### Order the examination, so that the viewer starts in the most recent cell
+  search_seq_post<-c(length(loc_meta_memory),sample(1:(length(loc_meta_memory)-1),length(loc_meta_memory)-1,rep=FALSE))
+  loc_meta_memory<-loc_meta_memory[search_seq_post]
+  meta_memory<-meta_memory[search_seq_post]
+  possible_space<-search_seq_post
+  retain<-rep(TRUE,length(meta_memory))
+  
+  search<-c()
+  for(k in search_seq_post){
+    if(!k%in%possible_space){
+      next
+    }
+    possible_space<-possible_space[-1]
+    if(length(possible_space)==0){
+      break
+    }
+    search_seq_bet<-sample(possible_space,length(possible_space),replace = FALSE)
+    search<-c(search,k,search_seq_bet)
+    for(l in search_seq_bet){
+      greater<-meta_memory[k]>meta_memory[l]
+      equal<-meta_memory[k]==meta_memory[l]
+      if(greater){
+        retain[k]<-retain[k]*TRUE
+        retain[l]<-retain[l]*FALSE
+        possible_space<-possible_space[-which(possible_space==l)]
+      }
+      if(equal){
+        retain[k]<-retain[k]*TRUE
+        retain[l]<-retain[l]*TRUE
+      }
+      if(!(greater|equal)){
+        retain[k]<-retain[k]*FALSE
+        retain[l]<-retain[l]*TRUE
+      }
+    }
+  }
+  retain<-retain==1
+  eye_movement<-loc_memory[search]
+  choices<-unlist(loc_meta_memory)[c(FALSE,TRUE)]
+  choice_order<-order(choices)
+  retain<-retain[choice_order]
+  choices<-choices[choice_order]
+  eye_choice<-choices[retain]
+  output<-list(eye_choice,eye_movement)
+  names(output)<-c("eye_choice","eye_movement")
+  return(output)  
+}
+
 ### Non-strategic players
 
 ## Optimist player selects the choice to maximize highest possible outcome
-
-choice_optimist<-function(game){
-  choice<-my_max(apply(game_own(game),1,max))
-  return(choice)
-}
 
 search_optimist<-function(game){
   # Get indices of payoffs
@@ -95,21 +155,32 @@ search_optimist<-function(game){
   search_seq_bet<-sample(c_own_own,length(c_own_own),replace=FALSE)
   # Search each choice to find local maximum, then compare the local maxima
   ind<-0
-  meta_memory<-c(rep(0,length(search_seq_bet)))
+  meta_memory<-c()
+  loc_meta_memory<-list()
   for(i in 1:length(search_seq_bet)){
     memory<-c()
+    memory_loc<-list()
     search_seq_in<-sample(c_other,length(c_other),replace=FALSE)
     for(j in 1:length(search_seq_in)){
       loc<-c(search_seq_in[j],search_seq_bet[i])
       memory[j]<-game[loc[1],loc[2]]
+      memory_loc[[j]]<-loc
       ind<-ind+1
       eye_movement[[ind]]<-loc
     }
-    meta_memory[i]<-max(memory)
+    meta_memory[i]<-memory[my_max(memory)[[1]]]
+    loc_meta_memory[[i]]<-memory_loc[[my_max(memory)[[1]]]]
   }    
-  meta_memory<-meta_memory[order(search_seq_bet)]
-  
-  eye_choice<-my_max(meta_memory)[[1]]  
+  eye_maximize<-search_maximum(meta_memory,loc_meta_memory)
+  eye_choice<-eye_maximize$eye_choice  
+  if(length(eye_choice)>1){
+    eye_choice<-sample(eye_choice,1)
+  }
+  eye_movement_max<-eye_maximize$eye_movement
+  if(identical(eye_movement[length(eye_movement)],eye_movement_max[1])){
+    eye_movement_max<-eye_movement_max[-1]
+  }
+  eye_movement<-c(eye_movement,eye_movement_max)
   an_choice<-my_max(apply(game_own(game),2,max))[[1]]
   flag<-my_max(apply(game_own(game),2,max))[[2]]
   output<-list(an_choice,eye_choice,eye_movement,flag,game)
@@ -128,24 +199,35 @@ search_pessimist<-function(game){
   search_seq_bet<-sample(c_own_own,length(c_own_own),replace=FALSE)
   # Search each choice to find local maximum, then compare the local maxima
   ind<-0
-  meta_memory<-c(rep(0,length(search_seq_bet)))
+  meta_memory<-c()
+  loc_meta_memory<-list()
   for(i in 1:length(search_seq_bet)){
     memory<-c()
+    memory_loc<-list()
     search_seq_in<-sample(c_other,length(c_other),replace=FALSE)
     for(j in 1:length(search_seq_in)){
       loc<-c(search_seq_in[j],search_seq_bet[i])
       memory[j]<-game[loc[1],loc[2]]
+      memory_loc[[j]]<-loc
       ind<-ind+1
       eye_movement[[ind]]<-loc
     }
-    meta_memory[i]<-min(memory)
+    meta_memory[i]<-memory[my_min(memory)[[1]]]
+    loc_meta_memory[[i]]<-memory_loc[[my_min(memory)[[1]]]]
   }    
-  meta_memory<-meta_memory[order(search_seq_bet)]
-  
-  eye_choice<-my_max(meta_memory)[[1]]  
-  an_choice<-my_max(apply(game_own(game),2,min))[[1]]
-  flag<-my_max(apply(game_own(game),2,min))[[2]]
-  output<-list(an_choice,eye_choice,eye_movement,flag, game)
+  eye_maximize<-search_maximum(meta_memory,loc_meta_memory)
+  eye_choice<-eye_maximize$eye_choice  
+  if(length(eye_choice)>1){
+    eye_choice<-sample(eye_choice,1)
+  }
+  eye_movement_max<-eye_maximize$eye_movement
+  if(identical(eye_movement[length(eye_movement)],eye_movement_max[1])){
+    eye_movement_max<-eye_movement_max[-1]
+  }
+  eye_movement<-c(eye_movement,eye_movement_max)
+  an_choice<-my_max(apply(game_own(game),2,max))[[1]]
+  flag<-my_max(apply(game_own(game),2,max))[[2]]
+  output<-list(an_choice,eye_choice,eye_movement,flag,game)
   names(output)<-c("an_choice","eye_choice","eye_movement","flag","game")
   return(output)
 }
@@ -220,6 +302,8 @@ search_naive<-function(game){
   names(output)<-c("an_choice","eye_choice","eye_movement","flag","game")
   return(output)
 }
+
+
 
 search_k.level<-function(game,k){
   # Get indices of payoffs
@@ -478,77 +562,6 @@ animate_search(a$eye_movement,a$game,.5)
 
 
 
-choice_dominance<-function(game,k){
-  own<-game_own(game)
-  other<-game_other(game)
-  xind<-c(1:length(own[,1]))
-  yind<-c(1:length(own[1,]))
-  
-  
-  for(z in 1:k){
-    if(length(xind)>1&length(yind)>1){
-      
-      dom_other<-c()
-      for(i in 1:length(other[1,])){
-        doms<-c()
-        for(j in 1:length(other[1,])){
-          tvec<-other[,i]<other[,j]
-          doms[j]<-ifelse(sum(tvec)==length(other[,1]),1,0)
-        }
-        dom_other[i]<-sum(doms)
-      }
-      
-      exclude_other<-which(dom_other>0)
-      
-      if(length(exclude_other)>0){
-        xind<-xind[-exclude_other]
-        own<-own[,-exclude_other]
-        other<-other[,-exclude_other]
-      }
-      
-    }
-    
-    if(length(xind)>1&length(yind)>1){
-      
-      dom_own<-c()
-      for(i in 1:length(own[,1])){
-        doms<-c()
-        for(j in 1:length(own[,1])){
-          tvec<-own[i,]<own[j,]
-          doms[j]<-ifelse(sum(tvec)==length(own[1,]),1,0)
-        }
-        dom_own[i]<-sum(doms)
-      }
-      exclude_own<-which(dom_own>0)
-      
-      if(length(exclude_own)>0){
-        yind<-yind[-exclude_own]
-        own<-own[-exclude_own,]
-        other<-other[-exclude_own,]
-      }
-      
-    }
-    
-    if(length(yind)==1){
-      choice<-yind
-      return(choice)
-      #break
-    }
-    
-    if(length(xind)==1){
-      choice<-my_max(own)
-      return(choice)
-      #break
-    }
-    
-    if(length(xind)>1&length(yind)>1){
-      choice<-my_max(rowSums(own))
-      return(choice)
-      #break
-    }
-  }
-  
-}
 
 choice_nash<-function(game){
   p1<-length(game[,1])
@@ -637,7 +650,7 @@ plot_eye<-function(eye_data, game){
   insearch[,1]<-insearch[,1]+shift_is
   
   xcor<-rep(c(1:length(game[1,])),each=length(game[,1]))
-  ycor<-rep(c(length(game[,1]):1),length(game[1,]))
+  ycor<-rep(1:c(length(game[,1])),length(game[1,]))
   shift_cor<-ifelse(xcor%%2!=0,-.5,0)  
   ycor<-ycor+shift_cor
   
