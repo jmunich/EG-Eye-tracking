@@ -26,7 +26,7 @@ search_pessimist<-function(game){
     loc_meta_memory[[i]]<-memory_loc[[my_min(memory)[[1]]]]
   }    
   eye_maximize<-search_maximum(meta_memory,loc_meta_memory)
-  eye_choice<-eye_maximize$eye_choice  
+  eye_choice<-which(c_own_own%in%eye_maximize$eye_choice)  
   if(length(eye_choice)>1){
     eye_choice<-sample(eye_choice,1)
   }

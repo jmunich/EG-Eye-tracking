@@ -1,0 +1,14 @@
+k ~ dbin(P,1)
+P <- exp(G1 + G2[i] + G3[t])/(1 + exp(G1 + G2[i] + G3[t]))
+G2[i] ~ dnorm(0,S)
+G3[t] ~ L*exp(-L*t)
+
+Pa <- (k*(e1*Fa))+(((1-k)*((1-e0)/(1+exp(B0)))+(e0*Fa))
+Pb <- (k*(((1-e1)*(exp(B0+B1))/(1+exp(B0+B1)))+(e1*Fb)))+((1-k)*(((1-e0)*(exp(B0)/(1+exp(B0))))+(e0*Fb)))
+Pc <- (k*(((1-e1)/(1+exp(B0+B1)))+(e1*Fc))+((1-k)*(e0*Fc))
+Pd <- (k*(e1*Fd))+((1-k)*(e0*Fd))
+
+Fa <-.087
+Fb <-.194
+Fc <-.526
+Fd <-.194

@@ -1,0 +1,408 @@
+---
+title: "Model Formal"
+author: "Jiri Munich"
+date: "June 11, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Individual level
+
+The probability of being a strategic player is a logit function of a global intercept $\gamma_0$, individual difference $\gamma_i$ and a trial parameter at time $t$, $\gamma_t$.
+
+\begin{equation}
+P(k)_{it}=\frac{e^{\gamma_0+\gamma_i+\gamma_t}}{1+e^{\gamma_0+\gamma_i+\gamma_t}}
+\end{equation}
+
+```{r, echo = FALSE}
+pk<-function(g0,gi,gt){
+  p<-exp(g0+gi+gt)/(1+exp(g0+gi+gt))
+}
+```
+
+
+## Trial level
+
+One $P(k)_{it}$ for the trial is determined, the individual performs an information search $M_{it}$ and makes a choice $x_{it}$.
+
+### Choice behaviour
+
+Let $x_k^{it}=[0,1]$ be individual $i$'s choice in trial $t$ congruent with decision rule $k$. Let $\delta_k$ be the probability of making an error following decision rule $k$. Let $C$ denote the known parameter of total number of available choices in trial and $c_k^t$ known parameter of the number of choices in trial $t$ congruent with decision rule $k$. 
+
+Then, the probability of observing a choice $x_k$ congruent with $k$ given decision rule $k^{it}$ is the probability of not making an error $\delta_{k}$ plus the probability of making an error (random decision), but still arriving at the correct choice by accident $\frac{c_k^t}{C}$, that is, the proportion of rule congruent choices in the trial to the total number of available choices:
+
+\begin{equation}
+P(x_k|k)_{t}=(1-\delta_{k})+\delta_{k}\frac{c_k^t}{C}
+\end{equation}
+
+An individual can also select a choice congruent with $k$ when using decision rule $\neg k$, but commiting error, which can happen with probability $\delta_{\neg k}$. In that case, he randomly select $k$-congruent choice with probability based on the proportion of $c_k$ to $C$ congruent choices in the trial.
+
+\begin{equation}
+P(x_k^{t}|\neg{k^{it}})=\epsilon_{\neg k}^i\frac{c_{k}^t}{C}
+\end{equation}
+
+The total probability of making a choice $x_k$ by individual $i$ in trial $t$ is the probability of making the while using $k$ conditional on using $k$ plus the probability of making it while using $\neg k$ conditional on using $\neg k$.
+
+\begin{equation}
+P(x_k)_{it}=P(k)_{it}P(x_k|k)_{t}+P(\neg k)_{it}P(x_k|\neg k)_{t}
+\end{equation}
+
+The probability of decision rule $k$ in trial $t$ conditional on observing $x_k^{it}$ is:
+
+\begin{equation}
+P(k|x_k)_{it}=\frac{P(k)_{it}P(x_k|k)_{t}}{P(x_k)_t}
+\end{equation}
+
+### Eye-movement
+
+In each trial, an individual is expected to make multiple transitions (saccades) between values displayed in the payoff matrix. Each decision rule implies some types of transitions, just like each decision rule implies some choice behaviour. We model eye movement on the level of meta-transitions, a sequence of two transitions. For example a meta-transitions involving areas of interest X,Y and Z might look like: $X \rightarrow Y \rightarrow Z$.
+
+Individual's eye-movement output for each trial is a vector $M_{it}$ of length $l$ with counts of $l$ types of observed meta-transitions. We study four types of meta-transitions $T=[A,B,C,D]$, so vector $M$ contains four values. 
+
+\begin{equation}
+M=[m_A,m_B,m_C,m_D]
+\end{equation}
+
+The likelihood of $M$ is the product of of likelihoods of it's individual components. 
+
+\begin{equation}
+P(M|k)=\prod_{a=1}^l P(T_a|k)^{M_a}
+\end{equation}
+
+Like for choice (1), the probability of making a particular type of meta-transition $T_a$ is a function of decision rule $k$ and its respective probability of making an error $\epsilon_k$ multiplied by the probability of making $T_a$ meta-transition by chance. 
+
+\begin{equation}\label{eq:0}
+P(T_a|k,\epsilon_{k})_{t}=(1-\epsilon_{k})P(T_a)+\epsilon_{k}F_a
+\end{equation}
+
+#### Theory-implied probabilities of meta-transitions
+
+##### Correctly implemented information search
+
+We classify transitions into six types. Intracell (between own and other within one matrix cell), Own-within (between own payoffs within own choice), Own-between (between Own payoffs between own choices), Other-within (between other's payoffs within other's choice), Other-between (between other's payoffs between other's choices) and Skip (Complement of the sum of the remaining types). A symmetric meta-transition matrix $\Phi$ represents all combinations of transitions. Every cell $[A,B]$ represent a meta-transition $A \rightarrow B$.
+
+The values in $\phi$ represent what decision rule implies that particular meta-transition. There are four types of meta-transitions. Cells with $N$ are expected only from non-strategic decision rules ($\neg k$). Cells with $N/S$ are expected from both non-strategic and strategic ($k$) decision rules. $S$ are expected from only strategic decision rules and $Neither$ are not expected under either rule and $0$ stands for meta-transitions impossible by definition.  
+
+$$\Phi=\begin{array}{c} 
+Intracell \\
+OwnW \\
+OwnB \\
+OtherW \\
+OtherB \\
+Skip \\
+\end{array}
+\left(\begin{array}{cccccc} 
+N & N/S & N/S & N/S & N/S & N\\
+N/S & N/S & N/S & 0 & 0 & S\\
+N/S & N/S & N/S & 0 & 0 & S\\
+N/S & 0 & 0 & S & S & S\\
+N/S & 0 & 0 & S & S & S\\
+N & S & S & S & S & Neither\\
+\end{array}\right)$$
+
+Based on under which decision rules they might be produced, we divide meta-transitions into groups that consitute vector T.
+
+$$\Phi=\begin{array}{c} 
+Intracell \\
+OwnW \\
+OwnB \\
+OtherW \\
+OtherB \\
+Skip \\
+\end{array}
+\left(\begin{array}{cccccc} 
+A & B & B & B & B & A\\
+B & B & B & 0 & 0 & C\\
+B & B & B & 0 & 0 & C\\
+B & 0 & 0 & C & C & C\\
+B & 0 & 0 & C & C & C\\
+A & C & C & C & C & D\\
+\end{array}\right)$$
+
+From the theoretical matrix of meta-transitions, we can formulate implied probability functions for meta-transition types given decision rule. Strategic decision maker $k$ does not make type $A$ meta-transitions (\ref{eq:1}). Type $B$ meta-transition can be done by both $k$ and $\neg k$. The probability is a logit function where $\beta_0$ represent the intercept shared by both decision rules and $\beta_1$ the difference of $k$ from $\neg k$ (\ref{eq:2}). As $k$ only makes $B$ or $C$ meta-transitions, $P(C|k)$ is just the complement of $P(B|k)$ (\ref{eq:3}). As with $A$, strategic decision rules do not imply $D$ (\ref{eq:4}).
+
+
+\begin{equation}\label{eq:1}
+P(A|k) = 0
+\end{equation} 
+\begin{equation}\label{eq:2}
+P(B|k) = \frac{e^{\beta_0+\beta_1}}{1+e^{\beta_0+\beta_1}}
+\end{equation} 
+\begin{equation}\label{eq:3}
+P(C|k) = \frac{1}{1+e^{\beta_0+\beta_1}}
+\end{equation} 
+\begin{equation}\label{eq:4}
+P(D|k) = 0
+\end{equation} 
+
+Following (\ref{eq:2}), the probability of $B$ for non-strategic decision rule is the logit transformation of $\beta_0$ parameter (\ref{eq:6}) and as in (\ref{eq:3}) the probability $P(A|\neg k)$ is the complement to $P(B|\neg k)$ (\ref{eq:7}). Non-strategic decision rules do not imply $C$ nor $D$ (\ref{eq:8}).  
+
+\begin{equation}\label{eq:5}
+P(A|\neg k) = \frac{1}{1+e^{\beta_0}}
+\end{equation} 
+\begin{equation}\label{eq:6}
+P(B|\neg k) = \frac{e^{\beta_0}}{1+e^{\beta_0}}
+\end{equation} 
+\begin{equation}\label{eq:7}
+P(C|\neg k) = 0
+\end{equation} 
+\begin{equation}\label{eq:8}
+P(D|\neg k) = 0
+\end{equation} 
+
+##### Probability of making a meta-transition by chance
+
+When implementing a decision rule, individual can commit an error with the probability of $\epsilon_k$ respective to the rule. We conceptualize the error as making a meta-transition at random. In this section, we compute vector $F=[f_a,f_b,f_c,f_d]$ probabilities of making any type of meta-transition by chance.
+
+First, let $C$ represent the total number of choices available to both players (having symmetric game matrices). Possible transitions can be represented as edges of a fully connected network with $2C^2$. Then, the total number of possible transitions $T$ is:
+
+\begin{equation}
+T_0=2C^2(2C^2-1)=4C^4-2C^2
+\end{equation}
+
+And the number of possible $n$-long sequences of transitions is:
+
+\begin{equation}
+T_n=(2C)^2((2C)^2-1)^n
+\end{equation}
+
+Numbers of possible transitions for the five types we focus on are:
+
+
+\begin{equation}\label{eq:9}
+T_1^{Intracell}=2C^2
+\end{equation} 
+\begin{equation}\label{eq:10}
+T_1^{OwnW}=T_1^{OtherW}=C^2(C-1)=C^2-C
+\end{equation} 
+\begin{equation}\label{eq:11}
+T_1^{OwnB}=T_0^{OtherB}=C^2(C(C-1))=C^4-C^3
+\end{equation} 
+\begin{equation}\label{eq:12}
+T_1^{Skip}=4C^4-2C^2-(2C^2+2(C^2-C)+2(C^4-C^3))=2C^4+2C^3-6C^2+2C
+\end{equation} 
+
+The number of any possible meta-transition can be computed by multiplying the number of possible first transition (contained in $\tau_0$) with the frequency of the following transition in $\tau_1$. Note: i) for impossible meta-transitions, the number of possible follow-up transitions is $0$; ii) for $Skip$ and $Intracell$, the initial values in $A$ have been divided by 2, as they are applied separately to $Own$ and $Other$ in $B$; iii) $Skip$ column in $B$ has been computed by substracting the possible follow-up transitions from the number of any possible transition $4C^2-1$, the resulting value was multiplied by $2$ for $Skip$ and $Intracell$.   
+
+\begin{equation}
+\tau_0=\left(\begin{array}{cccccc} 
+C^2 & C^2-C & C^4-C^3 & C^2-C & C^4-C^3 & C^4+C^3-3C^2+C\\
+\end{array}\right)
+\end{equation}
+
+\begin{equation}
+\tau_1=\begin{array}{c} 
+Intracell \\
+OwnW \\
+OwnB \\
+OtherW \\
+OtherB \\
+Skip \\
+\end{array}
+\left(\begin{array}{cccccc} 
+2 & C-1 & C^2-C & C-1 & C^2-C & 2C^2-2\\
+1 & C-1 & C^2-C & 0 & 0 & C^2-1\\
+1 & C-1 & C^2-C & 0 & 0 & C^2-1\\
+1 & 0 & 0 & C-1 & C^2-C & C^2-1\\
+1 & 0 & 0 & C-1 & C^2-C & C^2-1\\
+2 & C-1 & C^2-C & C-1 & C^2-C & 2C^2-2\\
+\end{array}\right)
+\end{equation}
+
+In a $3\times3$ matrix, the probability of any type od meta-transition made at random is $\tau_{C=3}$.
+
+```{r, echo = FALSE}
+# Number of choices per player
+C<-3
+# All possible transitions
+F_1all<-(2*(C^2))*((2*(C^2))-1)
+# All possible meta-transitions
+F_2all<-(2*(C^2))*(((2*(C^2))-1)^2)
+# Intracell transitions
+F_inc<-2*(2*C^2)
+# Other within; own within
+F_otw<-F_oww<-(C^2)*(C-1)
+# Other between; own between
+F_otb<-F_owb<-(C^2)*(C*(C-1))
+# Skip
+F_ski<-F_1all-(F_inc+F_otw+F_oww+F_otb+F_owb)
+## Meta vectors
+V_inc<-c(1,(C-1)/2,(C*(C-1))/2,(C-1)/2,(C*(C-1))/2)
+V_oww<-c(1,(C-1),(C*(C-1)),0,0)
+V_owb<-c(1,(C-1),(C*(C-1)),0,0)
+V_otw<-c(1,0,0,(C-1),(C*(C-1)))
+V_otb<-c(1,0,0,(C-1),(C*(C-1)))
+V_ski<-c(1,(C-1)/2,(C*(C-1))/2,(C-1)/2,(C*(C-1))/2)
+C_ski<-((2*(C^2))-1)-c(sum(V_inc),sum(V_oww),sum(V_owb),sum(V_otw),sum(V_otb),sum(V_ski))
+# Matrix with probability of each meta-transition
+mtmat<-cbind(rbind(V_inc,V_oww,V_owb,V_otw,V_otb,V_ski),C_ski)
+invec<-c(F_inc,F_oww,F_otb,F_otw,F_otb,F_ski)
+pmat<-(mtmat*invec)/F_2all
+# Probability of meta-transition group
+Pa<-pmat[1,1]+pmat[1,6]+pmat[6,1]
+Pb<-sum(pmat[1,c(2:5)])+sum(pmat[c(2:5),1])+sum(pmat[c(2:3),c(2:3)])
+Pc<-sum(pmat[6,c(2:5)])+sum(pmat[c(2:5),6])+sum(pmat[c(4:5),c(4:5)])
+Pd<-pmat[6,6]
+pvec<-c(Pa,Pb,Pc,Pd)
+
+write_matex2 <- function(x){
+  begin <- "\\left(\\begin{array}{cccccc}"
+  end <- "\\end{array}\\right)"
+  X <-apply(x, 1, function(x){paste(paste(x, collapse = "&"),"\\\\")})
+  paste(c(begin, X, end), collapse = "")
+}
+write_vec <- function(x){
+  begin <- "\\begin{array}{c}"
+  end <- "\\end{}array"
+  X <-paste(paste(x, collapse = ", "),"\\\\")
+  paste(c(begin, X, end), collapse = "")
+}
+mtx<-write_matex2(round(pmat,3))
+vtr<-paste(round(pvec,3),sep="")
+Fa<-paste(round(pvec[1],3),sep="")
+Fb<-paste(round(pvec[2],3),sep="")
+Fc<-paste(round(pvec[3],3),sep="")
+Fd<-paste(round(pvec[4],3),sep="")
+```
+
+$$\tau_{C=3}=\begin{array}{c} 
+Intracell \\
+OwnW \\
+OwnB \\
+OtherW \\
+OtherB \\
+Skip \\
+\end{array}
+`r mtx`$$
+
+Summing over cell groups of $\tau_{C=3}$, we can compute vector of probabilities $F$ for any group of meta-transitions $M=(A,B,C,D)$.
+
+$$F=[`r vtr`]$$
+
+Folowing equation \ref{eq:0}, we can formulate the full model, where an idividual can make a particular meta-transition either by intent or randomly as a result of making an error. 
+
+\begin{equation}
+P(A|k,\epsilon_k) = \epsilon_{k}f_{a}
+\end{equation} 
+\begin{equation}
+P(B|k,\epsilon_k) = (1-\epsilon_{k})\biggl(\frac{e^{\beta_0+\beta_1}}{1+e^{\beta_0+\beta_1}}\biggr)+\epsilon_{k}f_{b}
+\end{equation} 
+\begin{equation}
+P(C|k,\epsilon_k) = (1-\epsilon_{k})\biggl(\frac{1}{1+e^{\beta_0+\beta_1}}\biggr)+\epsilon_{k}f_{c}
+\end{equation} 
+\begin{equation}
+P(D|k,\epsilon_k) = \epsilon_{k}f_{d}
+\end{equation} 
+\begin{equation}
+P(A|\neg k) = (1-\epsilon_{\neg k})\biggl(\frac{1}{1+e^{\beta_0}}\biggr)+\epsilon_{\neg k}f_a
+\end{equation} 
+\begin{equation}
+P(B|\neg k) = (1-\epsilon_{\neg k})\biggl(\frac{e^{\beta_0}}{1+e^{\beta_0}}\biggr)+\epsilon_{\neg k}f_b
+\end{equation} 
+\begin{equation}
+P(C|\neg k) = \epsilon_{\neg k}f_c
+\end{equation} 
+\begin{equation}
+P(D|\neg k) = \epsilon_{\neg k}f_d
+\end{equation} 
+
+#### Model parameters
+
+On the trial level, the model has four parameters. Parameters $\beta_0$ and $\beta_1$ represent the difference in meta-transitions expected under correct implementation of decision rules $k$ and $\neg k$. These parameters can take any value, however, $\beta_1$ is expected to be negative. Paramaters $\epsilon_k$ and $\epsilon_{\neg k}$ represent the probability of making an error under the respective desision rule. These parameters are in the range $[0,1]$. 
+
+The following plots display predicted probabilities of different types of meta-transions as a function of model parameters.
+
+```{r, echo=FALSE}
+pN0<-function(b0,b1,e0,e1,pvec){
+  pa<-((1-e0)*(1/(1+exp(b0))))+(e0*pvec[1])
+  pb<-((1-e0)*(exp(b0)/(1+exp(b0))))+(e0*pvec[2])
+  pc<-e0*pvec[3]
+  pd<-e0*pvec[4]
+  return(c(pa,pb,pc,pd))
+}
+pN1<-function(b0,b1,e0,e1,pvec){
+  pa<-e1*pvec[1]
+  pb<-((1-e1)*(exp(b0+b1)/(1+exp(b0+b1))))+(e1*pvec[2])
+  pc<-((1-e1)*(1/(1+exp(b0+b1))))+(e1*pvec[3])
+  pd<-e1*pvec[4]
+  return(c(pa,pb,pc,pd))
+}
+```
+
+```{r, echo=FALSE}
+plot.probs<-function(x,type, parameter,from,to,step,ylab){
+  dat<-seq(from,to,step)
+  dat2<-matrix(0,nrow=length(dat),ncol=4)
+  for(i in 1:length(dat)){
+    dat2[i,]<-x(dat[i])
+  }
+  
+  plot(dat,dat2[,1],type='l',col="red", ylim=c(min(dat2),max(dat2)), main=paste(type,parameter, sep="; "),xlab=parameter,ylab=ylab)
+  points(dat,dat2[,2],type='l',col="green")
+  points(dat,dat2[,3],type='l',col="blue")
+  points(dat,dat2[,4],type='l',col="brown")
+  legend( x="top", 
+          legend=c("A","B","C","D"),
+          col=c("red","green","blue","brown"), lwd=1, lty=c(1), 
+          pch=c(NA,NA))
+}
+```
+
+```{r, echo=FALSE}
+par(mfrow=c(2,2))
+eq<-function(x){pN0(.1,-.1,x,.5,pvec)}
+plot.probs(eq,"k=0","e0",0,1,.001,"Probability")
+eq<-function(x){pN1(.1,-.1,.5,x,pvec)}
+plot.probs(eq,"k=1","e1",0,1,.001,"Probability")
+eq<-function(x){pN0(x,-.1,.3,.3,pvec)}
+plot.probs(eq,"k=0","B0",-1,1,.001,"Probability")
+eq<-function(x){pN1(x,-.1,.3,.3,pvec)}
+plot.probs(eq,"k=1","B0",-1,1,.001,"Probability")
+```
+
+```{r, include=FALSE}
+library(lattice)
+library(gridExtra)
+```
+
+```{r, echo=FALSE, message=FALSE}
+# run Model2.rmd to get functions pN0, pN1, and pvec
+par(mfrow=c(2,1))
+e0 <- seq(0, 1, length.out = 101); b0 <- seq(-2, 2, length.out = 101)
+
+# K = 0
+grid <- expand.grid(e0 = e0, b0 = b0)
+probs0 <- t(mapply(function(e0, b0){pN0(b0 = b0, e0 = e0, b1 = 0, e1 = 0, pvec = pvec)}, grid$e0, grid$b0))
+colnames(probs0) <- paste0("p", letters[1:4])
+
+#all(rowSums(probs0) == 1) # not all probs sum exactly to one
+res0 <- cbind(grid, probs0)
+
+
+pa <- lattice::levelplot(pa~e0+b0, data = res0, main = "p(A|K=0)", at = seq(0, 1, length.out = 101))
+pb <- lattice::levelplot(pb~e0+b0, data = res0, main = "p(B|K=0)", at = seq(0, 1, length.out = 101))
+pc <- lattice::levelplot(pc~e0+b0, data = res0, main = "p(C|K=0)", at = seq(0, 1, length.out = 101))
+pd <- lattice::levelplot(pd~e0+b0, data = res0, main = "p(D|K=0)", at = seq(0, 1, length.out = 101))
+
+gridExtra::grid.arrange(pa, pb, pc, pd, ncol = 2)
+
+
+# K=1
+grid <- expand.grid(e1 = e0, b1 = b0)
+probs1 <- t(mapply(function(e1, b1){pN1(b0 = 0, e0 = 0, b1 = b1, e1 = e1, pvec = pvec)}, grid$e1, grid$b1))
+colnames(probs1) <- paste0("p", letters[1:4])
+
+#all(rowSums(probs1) == 1) # not all probs sum exactly to one
+res1 <- cbind(grid, probs1)
+
+
+pa <- lattice::levelplot(pa~e1+b1, data = res1, main = "p(A|K=1)", at = seq(0, 1, length.out = 101))
+pb <- lattice::levelplot(pb~e1+b1, data = res1, main = "p(B|K=1)", at = seq(0, 1, length.out = 101))
+pc <- lattice::levelplot(pc~e1+b1, data = res1, main = "p(C|K=1)", at = seq(0, 1, length.out = 101))
+pd <- lattice::levelplot(pd~e1+b1, data = res1, main = "p(D|K=1)", at = seq(0, 1, length.out = 101))
+
+gridExtra::grid.arrange(pa, pb, pc, pd, ncol = 2)
+```

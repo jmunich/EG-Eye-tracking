@@ -1,5 +1,9 @@
-plot_eye<-function(eye_object){
+plot_eye<-function(eye_object=1){
   require(plotrix)
+  if(length(eye_object)==1){
+    eye_object<-list(eye_movement<-list(c(99,99),c(99,99)),eye_choice<-"NULL",game<-generate_game(3,3,1:9))
+    names(eye_object)<-c("eye_movement","eye_choice","game")
+  }
   eye_data<-eye_object$eye_movement
   game<-eye_object$game
   choice<-eye_object$eye_choice
@@ -48,11 +52,7 @@ plot_eye<-function(eye_object){
   axis(2,at=(1:length(game[,1]))-.25,pos=.5,col=NA,tck=0,font=16,labels=as.character(c(1:length(game[,1]))),las=2,cex=.7,cex.axis=.5)
 }
 
-search_naive(transpose_game(game))$eye_choice
-eye_object<-search_k.1(game)
-plot_eye(eye_object)
-
-animate_search<-function(eye_object,time){
+animate_search<-function(eye_object,time=.5){
   eye_data<-eye_object$eye_movement
 
   par(mfrow=c(1,1),mar = c(2, 2, 2, 2),oma=c(2,0,0,0))
@@ -63,8 +63,18 @@ animate_search<-function(eye_object,time){
   }
 }
 
-game<-generate_game(3,3,1:9)
-a<-search_k.level(game,7)
-b<-search_k.level(transpose_game(game),6)
-animate_search(b,.5)
+animate_search_gif<-function(eye_object,time=.5){
+  eye_data<-eye_object$eye_movement
+  par(mfrow=c(1,1),mar = c(2, 2, 2, 2),oma=c(2,0,0,0))
+  for(i in 1:length(eye_data)){
+    frame<-paste(c("Frame_",i,".png"),collapse="")
+    png(frame)
+    eye_object$eye_movement<-eye_data[c(1:i)]
+    plot_eye(eye_object)
+    dev.off()
+  }
+}
 
+game<-generate_game(3,3,1:9)
+e_o<-search_k.level(game,2)
+animate_search_gif(e_o)

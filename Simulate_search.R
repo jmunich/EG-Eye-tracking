@@ -303,8 +303,6 @@ search_naive<-function(game){
   return(output)
 }
 
-
-
 search_k.level<-function(game,k){
   # Get indices of payoffs
   c_own_own<-c(1:length(game[1,]))[c(FALSE,TRUE)]
@@ -554,14 +552,6 @@ search_domination<-function(game,k){
 }
 
 
-game<-generate_game(4,3,1:9)
-
-a<-search_domination(game,4)
-
-animate_search(a$eye_movement,a$game,.5)
-
-
-
 
 choice_nash<-function(game){
   p1<-length(game[,1])
@@ -720,5 +710,10 @@ animate_search<-function(eye_object,time){
   }
   mtext(paste("Choice = ",choice,sep=""), side=3, line=-.5, cex=.7, font=16)
 }
+
 a<-search_k.level(game,2)
+
+a$eye_movement
+
+
 animate_search(a,.5)

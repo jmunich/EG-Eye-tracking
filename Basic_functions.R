@@ -88,52 +88,60 @@ transpose_eye<-function(eye_data,game){
 }
 
 ## Utility for eye-search in finding the maximum in pre-selected subset of cells
+meta_memory<-c(2,4,6,8,10)
+loc_meta_memory<-list(c(1,1),c(2,2),c(3,3),c(4,4),c(4,5))
 
 search_maximum<-function(meta_memory,loc_meta_memory){
   memory<-meta_memory
   loc_memory<-loc_meta_memory
   ### Order the examination, so that the viewer starts in the most recent cell
   search_seq_post<-c(length(loc_meta_memory),sample(1:(length(loc_meta_memory)-1),length(loc_meta_memory)-1,rep=FALSE))
-  loc_meta_memory<-loc_meta_memory[search_seq_post]
-  meta_memory<-meta_memory[search_seq_post]
+  locations<-loc_meta_memory
+  values<-meta_memory
   possible_space<-search_seq_post
-  retain<-rep(TRUE,length(meta_memory))
+  retain<-rep(1,length(values))
   
   search<-c()
+  
   for(k in search_seq_post){
+    if(sum(retain)==1){
+      break
+    }
     if(!k%in%possible_space){
       next
     }
-    possible_space<-possible_space[-1]
+    possible_space<-possible_space[-which(possible_space==k)]
     if(length(possible_space)==0){
       break
     }
-    search_seq_bet<-sample(possible_space,length(possible_space),replace = FALSE)
-    search<-c(search,k,search_seq_bet)
-    for(l in search_seq_bet){
-      greater<-meta_memory[k]>meta_memory[l]
-      equal<-meta_memory[k]==meta_memory[l]
+    search<-c(search,k)
+    for(l in possible_space){
+      if(!l%in%possible_space){
+        next
+      }
+      search<-c(search,l)
+      greater<-values[which(search_seq_post==k)]>values[which(search_seq_post==l)]
+      equal<-values[which(search_seq_post==k)]==values[which(search_seq_post==l)]
       if(greater){
-        retain[k]<-retain[k]*TRUE
-        retain[l]<-retain[l]*FALSE
+        retain[which(search_seq_post==k)]<-retain[which(search_seq_post==k)]*1
+        retain[which(search_seq_post==l)]<-retain[which(search_seq_post==l)]*0
         possible_space<-possible_space[-which(possible_space==l)]
       }
       if(equal){
-        retain[k]<-retain[k]*TRUE
-        retain[l]<-retain[l]*TRUE
+        retain[which(search_seq_post==k)]<-retain[which(search_seq_post==k)]*1
+        retain[which(search_seq_post==l)]<-retain[which(search_seq_post==l)]*1
       }
       if(!(greater|equal)){
-        retain[k]<-retain[k]*FALSE
-        retain[l]<-retain[l]*TRUE
+        retain[which(search_seq_post==k)]<-retain[which(search_seq_post==k)]*0
+        retain[which(search_seq_post==l)]<-retain[which(search_seq_post==l)]*1
+        break
       }
     }
   }
+  
   retain<-retain==1
   eye_movement<-loc_memory[search]
-  choices<-unlist(loc_meta_memory)[c(FALSE,TRUE)]
-  choice_order<-order(choices)
-  retain<-retain[choice_order]
-  choices<-choices[choice_order]
+  choices<-unlist(locations)[c(FALSE,TRUE)]
   eye_choice<-choices[retain]
   output<-list(eye_choice,eye_movement)
   names(output)<-c("eye_choice","eye_movement")
