@@ -1,6 +1,6 @@
 #### Set the number of games, the number of repetitions per game and n for transition n_grams
 n<-1
-eye_output<-simulate_search(3000,1,n=n)
+eye_output<-simulate_search(1000,1,n=n)
 
 ## Get transition data (hash the second line to have frequencies instead of proportions)
 t_simulated_data<-eye_output$transition_data
@@ -14,9 +14,16 @@ mt_simulated_data<-mt_simulated_data[,!names(mt_simulated_data)%in%exclude]
 mt_simulated_data[,-c(1,2)]<-mt_simulated_data[,-c(1,2)]/rowSums(mt_simulated_data[,-c(1,2)])
 
 ## Get mean proportions of meta-transitions per decision rule
-rule_means<-aggregate(mt_simulated_data[,-c(1,2)],by=list(mt_simulated_data$rule),mean)
 #for transitions unhash:
-#rule_means<-aggregate(t_simulated_data[,-c(1,2)],by=list(t_simulated_data$rule),mean)
+mt_simulated_data<-t_simulated_data
+
+number_mt<-rowSums(mt_simulated_data[,-c(1,2)])
+n_mt_means<-aggregate(number_mt,by=list(mt_simulated_data$rule),mean)
+n_mt<-as.integer(n_mt_means[,2])
+names(n_mt)<-n_mt_means[,1]
+
+
+rule_means<-aggregate(mt_simulated_data[,-c(1,2)],by=list(mt_simulated_data$rule),mean)
 rule_sd<-aggregate(mt_simulated_data[,-c(1,2)],by=list(mt_simulated_data$rule),sd)
 data_output<-t(rule_means)
 c_names<-data_output[1,]
@@ -31,3 +38,4 @@ data_output<-data_output[,r_c_names]
 
 ## Get long data for box-plots
 boxplot_data<-reshape2::melt(mt_simulated_data[,-1])
+
