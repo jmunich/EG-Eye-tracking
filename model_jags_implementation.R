@@ -1,13 +1,13 @@
 library(runjags)
-run <- c("Basic_functions.R", "Dominate.R", "Naive.R", "Dominate-K.R", "K-1.R", "K-level.R", "Nash.R", "Optimist.R",
-         "Pessimist.R", "Altruist.R", "Get_data_functions.R")
+run <- c("Basic/Basic_functions.R", "Basic/Dominate.R", "Robots/Naive.R", "Robots/Dominate-K.R", "Basic/K-1.R", "Robots/K-level.R", "Robots/Nash.R", "Robots/Optimist.R",
+         "Robots/Pessimist.R", "Robots/Altruist.R", "Basic/Get_data_functions.R")
 lapply(run, source)
 n<-1
 
-# get data
+# get data for classification
 eye_output <- simulate_search(games = 20, repetitions = 5, n = n)
 
-# get metatransitions
+# get metatransitions for determining meta-transition groups
 exclude <- impossible_meta_transitions(3,3,n)
 mt_simulated_data <- eye_output$meta_transition_data
 mt_simulated_data <- mt_simulated_data[,!names(mt_simulated_data)%in%exclude]
@@ -137,6 +137,7 @@ plot(fit, vars = "w")
 plot(fit, vars = c("e", "b0"))
 plot(fit, vars = c("p"))
 
+summary(fit)
 # Filtering altruists in a separate group probably helps a little;
 # however, we still have trouble getting nice chains;
 
